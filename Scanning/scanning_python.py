@@ -10,6 +10,13 @@ cap = cv2.VideoCapture(1)  # replace 1 with the index of your external webcam
 
 last_update = 0
 
+def wait_for_confirmation(expected_response):
+    response = ser.read(1)
+    if response == expected_response.encode():
+        print(f"Received confirmation: {response}")
+    else:
+        print("Confirmation not received")
+
 while True:
     ret, frame = cap.read()
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -26,7 +33,6 @@ while True:
     lower_red = np.array([0, 70, 50])
     upper_red = np.array([10, 255, 255])
 
-    
     # threshold the HSV image to get only blue colors
     mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
     
@@ -45,29 +51,28 @@ while True:
     count_red = np.count_nonzero(mask_red)
     
     if time.perf_counter() - last_update > 2:
-    
         if (count_blue >= count_yellow) and (count_blue >= count_red):
             if count_blue > 500:
                 data = 1
                 ser.write(b'1')
-                response = ser.read(1)
-                print(response)
+                wait_for_confirmation('A')
+                print("Blue detected")
                 last_update = time.perf_counter()
         
         elif (count_yellow >= count_blue) and (count_yellow >= count_red):
             if count_yellow > 500:
                 data = 2
                 ser.write(b'2')
-                response = ser.read(1)
-                print(response)
+                wait_for_confirmation('A')
+                print("Yellow detected")
                 last_update = time.perf_counter()
         
         elif (count_red >= count_blue) and (count_red >= count_yellow):
             if count_red > 500:
                 data = 3
                 ser.write(b'3')
-                response = ser.read(1)
-                print(response)
+                wait_for_confirmation('A')
+                print("Red detected")
                 last_update = time.perf_counter()
     
     cv2.imshow('frame', frame)
